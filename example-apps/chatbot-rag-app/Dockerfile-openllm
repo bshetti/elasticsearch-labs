@@ -24,7 +24,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-
 COPY api ./api
 COPY data ./data
 COPY requirements.txt ./requirements.txt
@@ -32,6 +31,13 @@ RUN pip3 install --upgrade pip
 
 RUN pip3 install --no-cache-dir -r ./requirements.txt
 
+RUN pip3 install --no-cache-dir elastic-opentelemetry
+
+RUN pip3 install --no-cache-dir opentelemetry-instrumentation-bedrock
+RUN pip3 install --no-cache-dir opentelemetry-instrumentation-openai
+RUN pip3 install --no-cache-dir opentelemetry-instrumentation-langchain
+
+RUN opentelemetry-bootstrap -a install
 
 ENV FLASK_ENV production
 
