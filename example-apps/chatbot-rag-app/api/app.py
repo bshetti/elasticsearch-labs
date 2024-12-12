@@ -5,14 +5,19 @@ from chat import ask_question
 import os
 import sys
 
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+#FlaskInstrumentor().instrument(enable_commenter=True, commenter_options={}
+
 #following for langtrace comment out when not using langtrace
 from langtrace_python_sdk import langtrace
-langtrace.init()
+langtrace.init(batch=False)
 #-----
 
 app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
 CORS(app)
 
+FlaskInstrumentor().instrument_app(app)
 
 @app.route("/")
 def api_index():
