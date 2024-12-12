@@ -4,9 +4,11 @@ from uuid import uuid4
 from chat import ask_question
 import os
 import sys
-from langtrace_python_sdk import langtrace
 
+#following for langtrace comment out when not using langtrace
+from langtrace_python_sdk import langtrace
 langtrace.init()
+#-----
 
 app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
 CORS(app)

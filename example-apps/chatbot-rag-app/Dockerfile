@@ -1,4 +1,4 @@
-# app/Dockerfile
+# app/Dockerfile clean
 
 FROM node:16-alpine as build-step
 WORKDIR /app
