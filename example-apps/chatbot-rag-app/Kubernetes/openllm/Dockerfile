@@ -1,5 +1,3 @@
-# app/Dockerfile for openllm library with chatbot rag app
-
 FROM node:16-alpine as build-step
 WORKDIR /app
 ENV PATH /node_modules/.bin:$PATH
@@ -9,7 +7,6 @@ RUN cd frontend && yarn install
 RUN cd frontend && REACT_APP_API_HOST=/api yarn build
 
 FROM python:3.9-slim
-
 WORKDIR /app
 RUN mkdir -p ./frontend/build
 COPY --from=build-step ./app/frontend/build ./frontend/build 
@@ -23,12 +20,12 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-
 COPY api ./api
 COPY data ./data
 COPY requirements.txt ./requirements.txt
-RUN pip3 install --upgrade pip
 
+# Upgrade pip first and install dependencies without version constraints
+RUN pip3 install --upgrade pip
 RUN pip3 install --no-cache-dir -r ./requirements.txt
 RUN pip3 install --no-cache-dir elastic-opentelemetry
 RUN pip3 install --no-cache-dir opentelemetry-instrumentation-bedrock
@@ -38,7 +35,9 @@ RUN pip3 install --no-cache-dir opentelemetry-instrumentation-langchain
 RUN opentelemetry-bootstrap -a install
 
 ENV FLASK_ENV production
-
 EXPOSE 4000
+
 WORKDIR /app/api
+
+# Use OpenTelemetry instrumentation
 CMD ["opentelemetry-instrument", "flask", "run", "--host=0.0.0.0", "--port=4000"]

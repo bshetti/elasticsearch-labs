@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-elasticsearch-index-${TIMESTAMP}
+spec:
+  template:
+    spec:
+      containers:
+      - name: init-index
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/chatbot-rag-app:latest
+        workingDir: /app/api
+        command: ["python3", "-m", "flask", "--app", "app", "create-index"]
+        env:
+        - name: FLASK_APP
+          value: "app"
+        - name: LLM_TYPE
+          value: "bedrock"
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_MODEL_ID
+          value: "anthropic.claude-v2"
+        - name: ES_INDEX
+          value: "workplace-app-docs"
+        - name: ES_INDEX_CHAT_HISTORY
+          value: "workplace-app-docs-chat-history"
+        - name: ELASTIC_CLOUD_ID
+          valueFrom:
+            secretKeyRef:
+              name: chatbot-rag-secrets
+              key: ELASTIC_CLOUD_ID
+        - name: ELASTIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: chatbot-rag-secrets
+              key: ELASTIC_API_KEY
+        envFrom:
+        - secretRef:
+            name: chatbot-rag-secrets
+      restartPolicy: Never
+  backoffLimit: 4

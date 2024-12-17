@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chatbot-rag-secrets
+type: Opaque
+data:
+  AWS_ACCESS_KEY: "${AWS_ACCESS_KEY_BASE64}"
+  AWS_SECRET_KEY: "${AWS_SECRET_KEY_BASE64}"
+  ELASTIC_CLOUD_ID: "${ELASTIC_CLOUD_ID_BASE64}"
+  ELASTIC_API_KEY: "${ELASTIC_API_KEY_BASE64}"
+  OTEL_EXPORTER_OTLP_HEADERS: "${OTEL_EXPORTER_OTLP_HEADERS_BASE64}"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT_BASE64}"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-rag-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chatbot-rag-app
+  template:
+    metadata:
+      labels:
+        app: chatbot-rag-app
+    spec:
+      containers:
+      - name: chatbot-rag-app
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/chatbot-rag-app:latest
+        command: ["opentelemetry-instrument"]
+        args: ["flask", "run", "--no-reload", "--host=0.0.0.0", "--port=4000"]
+        ports:
+        - containerPort: 4000
+        env:
+        - name: LLM_TYPE
+          value: "bedrock"
+        - name: AWS_REGION
+          value: "${AWS_REGION}"
+        - name: AWS_MODEL_ID
+          value: "anthropic.claude-v2"
+        - name: OTEL_LOGS_EXPORTER
+          value: "otlp,console"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp,console"
+        - name: OTEL_METRICS_EXPORTER
+          value: "otlp,console"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=chat-api,service.version=0.0.1,deployment.environment=dev"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+          value: "true"
+        envFrom:
+        - secretRef:
+            name: chatbot-rag-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot-rag-service
+spec:
+  selector:
+    app: chatbot-rag-app
+  ports:
+  - port: 80
+    targetPort: 4000
+  type: LoadBalancer
+
