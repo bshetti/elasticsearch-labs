@@ -13,6 +13,7 @@ data:
   ELASTICSEARCH_URL: "${ELASTICSEARCH_URL_BASE64}"
   ELASTICSEARCH_USERL: "${ELASTICSEARCH_USER_BASE64}"
   ELASTICSEARCH_PASSWORD: "${ELASTICSEARCH_PASSWORD_BASE64}"
+  OPENAI_API_KEY: "$(OPEN_API_KEY_BASE64)"
 
 ---
 apiVersion: apps/v1
@@ -38,11 +39,13 @@ spec:
         - containerPort: 4000
         env:
         - name: LLM_TYPE
-          value: "bedrock"
-        - name: AWS_REGION
-          value: "${AWS_REGION}"
-        - name: AWS_MODEL_ID
-          value: "anthropic.claude-v2"
+          value: "openai"
+        - name: CHAT_MODEL
+          value: "gpt-4o-mini"
+#        - name: AWS_REGION
+#          value: "${AWS_REGION}"
+#        - name: AWS_MODEL_ID
+#          value: "anthropic.claude-v2"
 #        - name: OTEL_LOGS_EXPORTER
 #          value: "otlp,console"
 #        - name: OTEL_TRACES_EXPORTER
